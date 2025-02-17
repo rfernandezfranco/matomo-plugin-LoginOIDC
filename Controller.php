@@ -276,7 +276,8 @@ class Controller extends \Piwik\Plugin\Controller
         if (empty($user)) {
             if (Piwik::isUserIsAnonymous()) {
                 // user with the remote id is currently not in our database
-                $this->signupUser($settings, $providerUserId, $result->email);
+                $emailKey = $settings->emailKey->getValue();
+                $this->signupUser($settings, $providerUserId, $this->getNestedProperty($result, $emailKey));
             } else {
                 // link current user with the remote user
                 $this->linkAccount($providerUserId);
@@ -482,6 +483,32 @@ class Controller extends \Piwik\Plugin\Controller
     {
         $sql = "SELECT user, provider_user, provider FROM " . Common::prefixTable("loginoidc_provider") . " WHERE provider=? AND user=?";
         return Db::fetchRow($sql, array($provider, Piwik::getCurrentUserLogin()));
+    }
+
+    /**
+     * Retrieves the value of a nested property from an object.
+     *
+     * The property path is a string of property names separated by "->".
+     * If any property in the path does not exist, it returns null.
+     *
+     * Example:
+     *   // Assuming $result->user->attributes->email equals "example@mail.com"
+     *   $email = getNestedProperty($result, "user->attributes->email");
+     *
+     * @param  object $object       The object to query.
+     * @param  string $propertyPath The nested property path, e.g., "user->attributes->email".
+     *
+     * @return mixed                The value of the nested property or null if not found.
+     */
+    function getNestedProperty($object, $propertyPath) {
+        foreach (explode('->', $propertyPath) as $property) {
+            if (isset($object->{$property})) {
+                $object = $object->{$property};
+            } else {
+                return null;
+            }
+        }
+        return $object;
     }
 
 }
