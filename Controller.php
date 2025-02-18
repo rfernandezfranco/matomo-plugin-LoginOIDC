@@ -339,7 +339,7 @@ class Controller extends \Piwik\Plugin\Controller
             $matomoUserLogin = Piwik::getCurrentUserLogin();
         }
         $sql = "INSERT INTO " . Common::prefixTable("loginoidc_provider") . " (user, provider_user, provider, date_connected) VALUES (?, ?, ?, ?)";
-        $bind = array($matomoUserLogin, $providerUserId, "oidc", date("Y-m-d H:i:s"));
+        $bind = array($providerUserId, $providerUserId, "oidc", date("Y-m-d H:i:s"));
         Db::query($sql, $bind);
     }
 
@@ -385,15 +385,15 @@ class Controller extends \Piwik\Plugin\Controller
             }
 
             // set an invalid pre-hashed password, to block the user from logging in by password
-            Access::getInstance()->doAsSuperUser(function () use ($matomoUserLogin, $result) {
-                UsersManagerApi::getInstance()->addUser($matomoUserLogin,
+            Access::getInstance()->doAsSuperUser(function () use ($providerUserId, $matomoUserLogin, $result) {
+                UsersManagerApi::getInstance()->addUser($providerUserId,
                                                         "(disallow password login)",
                                                         $matomoUserLogin,
                                                         /* $_isPasswordHashed = */ true,
                                                         /* $initialIdSite = */ null);
             });
             $userModel = new Model();
-            $user = $userModel->getUser($matomoUserLogin);
+            $user = $userModel->getUser($providerUserId);
             $this->linkAccount($providerUserId, $matomoUserLogin);
             $this->signinAndRedirect($user, $settings);
         } else {
